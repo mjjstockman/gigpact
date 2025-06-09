@@ -14,7 +14,7 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "types": ["jest", "node"], // 👈 Add this line
+    "types": ["jest", "node"],
     "plugins": [
       {
         "name": "next"
@@ -28,7 +28,7 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    "**/*.test.ts", // 👈 Ensure test files are included
+    "**/*.test.ts",
     "**/*.test.tsx",
     ".next/types/**/*.ts"
   ],

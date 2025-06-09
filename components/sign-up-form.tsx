@@ -47,7 +47,7 @@ export function SignUpForm({
         options: {
           emailRedirectTo: `${window.location.origin}/protected`,
           data: {
-            username // ✅ this gets stored in raw_user_meta_data
+            username
           }
         }
       });
