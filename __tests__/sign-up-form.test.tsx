@@ -3,6 +3,20 @@ import '@testing-library/jest-dom';
 import { SignUpForm } from '../components/sign-up-form';
 
 describe('SignUpForm Email Validation', () => {
+  it('shows error when email field is empty', async () => {
+    const mockOnSubmit = jest.fn();
+
+    render(<SignUpForm onSubmit={mockOnSubmit} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+
+    const errorMessage = await screen.findByTestId('email-error');
+    expect(errorMessage).toBeInTheDocument();
+    expect(errorMessage).toHaveTextContent(/email is required/i);
+
+    expect(mockOnSubmit).not.toHaveBeenCalled();
+  });
+
   it('shows error when email format is invalid', async () => {
     const mockOnSubmit = jest.fn();
 
