@@ -9,6 +9,7 @@ type SignUpFormProps = {
 
 export function SignUpForm({ onSubmit }: SignUpFormProps) {
   const [emailTakenError, setEmailTakenError] = useState('');
+  const [usernameTakenError, setUsernameTakenError] = useState('');
 
   const {
     register,
@@ -21,16 +22,18 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
 
   async function handleFormSubmit(data: SignUpFormData) {
     setEmailTakenError('');
+    setUsernameTakenError('');
     try {
       await onSubmit(data);
     } catch (error: unknown) {
-      if (
-        error instanceof Error &&
-        error.message === 'Email already registered'
-      ) {
-        setEmailTakenError('This email is already registered');
-      } else {
-        throw error;
+      if (error instanceof Error) {
+        if (error.message === 'Email already registered') {
+          setEmailTakenError('This email is already registered');
+        } else if (error.message === 'Username already taken') {
+          setUsernameTakenError('This username is already taken');
+        } else {
+          throw error;
+        }
       }
     }
   }
@@ -43,6 +46,11 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
         <input id='username' type='text' {...register('username')} />
         {errors.username && (
           <p data-testid='username-error'>{errors.username.message}</p>
+        )}
+        {usernameTakenError && (
+          <p data-testid='username-taken-error' style={{ color: 'red' }}>
+            {usernameTakenError}
+          </p>
         )}
       </div>
 

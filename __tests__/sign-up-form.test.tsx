@@ -122,4 +122,49 @@ describe('SignUpForm Username Validation', () => {
     );
     expect(mockOnSubmit).not.toHaveBeenCalled();
   });
+
+  it('shows error when username contains spaces or invalid symbols like "!"', async () => {
+    const mockOnSubmit = jest.fn();
+
+    render(<SignUpForm onSubmit={mockOnSubmit} />);
+
+    fireEvent.input(screen.getByLabelText(/username/i), {
+      target: { value: 'invalid user!' }
+    });
+
+    fireEvent.input(screen.getByLabelText(/email/i), {
+      target: { value: 'test@example.com' }
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+
+    const errorMessage = await screen.findByTestId('username-error');
+    expect(errorMessage).toBeInTheDocument();
+    expect(errorMessage).toHaveTextContent(
+      /username can only contain letters, numbers, underscores, and hyphens/i
+    );
+
+    expect(mockOnSubmit).not.toHaveBeenCalled();
+  });
+
+  it('shows error when username is already taken', async () => {
+    const mockOnSubmit = jest.fn(() => {
+      return Promise.reject(new Error('Username already taken'));
+    });
+
+    render(<SignUpForm onSubmit={mockOnSubmit} />);
+
+    fireEvent.input(screen.getByLabelText(/username/i), {
+      target: { value: 'takenuser' }
+    });
+
+    fireEvent.input(screen.getByLabelText(/email/i), {
+      target: { value: 'test@example.com' }
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+
+    const errorMessage = await screen.findByTestId('username-taken-error');
+    expect(errorMessage).toHaveTextContent('This username is already taken');
+  });
 });
