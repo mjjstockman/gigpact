@@ -223,6 +223,29 @@ describe('SignUpForm Username Validation', () => {
     expect(mockOnSubmit).not.toHaveBeenCalled();
   });
 
+  it('shows error when username does not contain any lowercase letters', async () => {
+    const mockOnSubmit = jest.fn();
+
+    render(<SignUpForm onSubmit={mockOnSubmit} />);
+
+    fireEvent.input(screen.getByLabelText(/username/i), {
+      target: { value: 'ALLUPPERCASE' }
+    });
+
+    fireEvent.input(screen.getByLabelText(/email/i), {
+      target: { value: 'test@example.com' }
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+
+    const errorMessage = await screen.findByTestId('username-error');
+    expect(errorMessage).toHaveTextContent(
+      /must contain at least one lowercase letter/i
+    );
+
+    expect(mockOnSubmit).not.toHaveBeenCalled();
+  });
+
   it('trims leading and trailing spaces from username before submitting', async () => {
     const mockOnSubmit = jest.fn();
 
