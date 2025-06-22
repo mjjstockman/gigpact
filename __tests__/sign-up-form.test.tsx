@@ -198,4 +198,31 @@ describe('SignUpForm Username Validation', () => {
     const errorMessage = await screen.findByTestId('username-taken-error');
     expect(errorMessage).toHaveTextContent('This username is already taken');
   });
+
+  it('trims leading and trailing spaces from username before submitting', async () => {
+    const mockOnSubmit = jest.fn();
+
+    render(<SignUpForm onSubmit={mockOnSubmit} />);
+
+    fireEvent.input(screen.getByLabelText(/username/i), {
+      target: { value: '  TrimUser  ' }
+    });
+
+    fireEvent.input(screen.getByLabelText(/email/i), {
+      target: { value: 'user@example.com' }
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+    });
+
+    expect(mockOnSubmit).toHaveBeenCalledTimes(1);
+
+    expect(mockOnSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        username: 'TrimUser',
+        email: 'user@example.com'
+      })
+    );
+  });
 });

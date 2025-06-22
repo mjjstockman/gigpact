@@ -43,7 +43,13 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
       {/* Username field */}
       <div>
         <label htmlFor='username'>Username</label>
-        <input id='username' type='text' {...register('username')} />
+        <input
+          id='username'
+          type='text'
+          {...register('username', {
+            setValueAs: (val) => val.trim()
+          })}
+        />
         {errors.username && (
           <p data-testid='username-error'>{errors.username.message}</p>
         )}
