@@ -99,4 +99,27 @@ describe('SignUpForm Username Validation', () => {
     expect(errorMessage).toHaveTextContent(/at least 3 characters/i);
     expect(mockOnSubmit).not.toHaveBeenCalled();
   });
+
+  it('shows error when username is too long', async () => {
+    const mockOnSubmit = jest.fn();
+
+    render(<SignUpForm onSubmit={mockOnSubmit} />);
+
+    fireEvent.input(screen.getByLabelText(/username/i), {
+      target: { value: 'a'.repeat(21) }
+    });
+
+    fireEvent.input(screen.getByLabelText(/email/i), {
+      target: { value: 'test@example.com' }
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+
+    const errorMessage = await screen.findByTestId('username-error');
+    expect(errorMessage).toBeInTheDocument();
+    expect(errorMessage).toHaveTextContent(
+      /username must be at most 20 characters/i
+    );
+    expect(mockOnSubmit).not.toHaveBeenCalled();
+  });
 });
