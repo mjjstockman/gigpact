@@ -19,20 +19,17 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
     mode: 'onSubmit'
   });
 
-  // Wrap onSubmit to handle email-taken error
   async function handleFormSubmit(data: SignUpFormData) {
-    setEmailTakenError(''); // reset error before submit
+    setEmailTakenError('');
     try {
       await onSubmit(data);
     } catch (error: unknown) {
-      // Adjust error handling based on your error shape
       if (
         error instanceof Error &&
         error.message === 'Email already registered'
       ) {
         setEmailTakenError('This email is already registered');
       } else {
-        // Optionally handle other errors or rethrow
         throw error;
       }
     }
@@ -40,6 +37,16 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} noValidate>
+      {/* Username field */}
+      <div>
+        <label htmlFor='username'>Username</label>
+        <input id='username' type='text' {...register('username')} />
+        {errors.username && (
+          <p data-testid='username-error'>{errors.username.message}</p>
+        )}
+      </div>
+
+      {/* Email field */}
       <div>
         <label htmlFor='email'>Email</label>
         <input id='email' type='email' {...register('email')} />
@@ -52,6 +59,7 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
           </p>
         )}
       </div>
+
       <button type='submit'>Sign Up</button>
     </form>
   );
