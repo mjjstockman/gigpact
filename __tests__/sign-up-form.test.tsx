@@ -199,6 +199,30 @@ describe('SignUpForm Username Validation', () => {
     expect(errorMessage).toHaveTextContent('This username is already taken');
   });
 
+  it('shows error when username does not contain any uppercase letters', async () => {
+    const mockOnSubmit = jest.fn();
+
+    render(<SignUpForm onSubmit={mockOnSubmit} />);
+
+    fireEvent.input(screen.getByLabelText(/username/i), {
+      target: { value: 'alllowercase' }
+    });
+
+    fireEvent.input(screen.getByLabelText(/email/i), {
+      target: { value: 'test@example.com' }
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+
+    const errorMessage = await screen.findByTestId('username-error');
+    expect(errorMessage).toBeInTheDocument();
+    expect(errorMessage).toHaveTextContent(
+      /must contain at least one uppercase letter/i
+    );
+
+    expect(mockOnSubmit).not.toHaveBeenCalled();
+  });
+
   it('trims leading and trailing spaces from username before submitting', async () => {
     const mockOnSubmit = jest.fn();
 

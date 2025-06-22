@@ -15,4 +15,8 @@ export const signUpSchema = z.object({
       /^[A-Za-z0-9_-]+$/,
       'Username can only contain letters, numbers, underscores, and hyphens'
     )
+    .refine(
+      (val) => /[A-Z]/.test(val),
+      'Username must contain at least one uppercase letter'
+    )
 });
