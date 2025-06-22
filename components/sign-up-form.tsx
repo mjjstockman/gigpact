@@ -57,7 +57,13 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
       {/* Email field */}
       <div>
         <label htmlFor='email'>Email</label>
-        <input id='email' type='email' {...register('email')} />
+        <input
+          id='email'
+          type='email'
+          {...register('email', {
+            setValueAs: (val) => val.trim()
+          })}
+        />
         {errors.email && (
           <p data-testid='email-error'>{errors.email.message}</p>
         )}

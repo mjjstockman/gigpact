@@ -1,6 +1,6 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { SignUpForm } from '../components/sign-up-form'; // Adjust path if needed
+import { SignUpForm } from '../components/sign-up-form';
 
 // Helper to render, fill inputs, and submit form
 const setupAndSubmit = async (username: string, email: string) => {
@@ -16,7 +16,9 @@ const setupAndSubmit = async (username: string, email: string) => {
     target: { value: email }
   });
 
-  fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+  });
 
   return mockOnSubmit;
 };
@@ -67,7 +69,7 @@ describe('SignUpForm Email Validation', () => {
     render(<SignUpForm onSubmit={mockOnSubmit} />);
 
     fireEvent.input(screen.getByLabelText(/username/i), {
-      target: { value: 'testuser' }
+      target: { value: 'testUser' }
     });
 
     fireEvent.input(screen.getByLabelText(/email/i), {
@@ -78,6 +80,33 @@ describe('SignUpForm Email Validation', () => {
 
     const errorMessage = await screen.findByTestId('email-taken-error');
     expect(errorMessage).toHaveTextContent('This email is already registered');
+  });
+
+  it('trims leading and trailing spaces from email before submitting', async () => {
+    const mockOnSubmit = jest.fn();
+
+    render(<SignUpForm onSubmit={mockOnSubmit} />);
+
+    fireEvent.input(screen.getByLabelText(/username/i), {
+      target: { value: 'ValidUser1' }
+    });
+
+    fireEvent.input(screen.getByLabelText(/email/i), {
+      target: { value: '  user@example.com  ' }
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+    });
+
+    expect(mockOnSubmit).toHaveBeenCalledTimes(1);
+
+    expect(mockOnSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: 'user@example.com',
+        username: 'ValidUser1'
+      })
+    );
   });
 });
 
@@ -106,7 +135,7 @@ describe('SignUpForm Username Validation', () => {
     render(<SignUpForm onSubmit={mockOnSubmit} />);
 
     fireEvent.input(screen.getByLabelText(/username/i), {
-      target: { value: 'a'.repeat(21) }
+      target: { value: 'A'.repeat(21) }
     });
 
     fireEvent.input(screen.getByLabelText(/email/i), {
@@ -155,14 +184,16 @@ describe('SignUpForm Username Validation', () => {
     render(<SignUpForm onSubmit={mockOnSubmit} />);
 
     fireEvent.input(screen.getByLabelText(/username/i), {
-      target: { value: 'takenuser' }
+      target: { value: 'takenUser' }
     });
 
     fireEvent.input(screen.getByLabelText(/email/i), {
       target: { value: 'test@example.com' }
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+    });
 
     const errorMessage = await screen.findByTestId('username-taken-error');
     expect(errorMessage).toHaveTextContent('This username is already taken');
