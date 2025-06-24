@@ -27,5 +27,8 @@ export const signUpSchema = z.object({
       (val) => /[0-9]/.test(val),
       'Username must contain at least one number'
     ),
-  password: z.string().nonempty('Password is required')
+  password: z
+    .string()
+    .nonempty('Password is required')
+    .min(8, 'Password must be at least 8 characters')
 });

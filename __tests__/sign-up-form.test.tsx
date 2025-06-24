@@ -300,4 +300,30 @@ describe('SignUpForm Password Validation', () => {
 
     expect(mockOnSubmit).not.toHaveBeenCalled();
   });
+
+  it('shows error when password is less than 8 characters', async () => {
+    const mockOnSubmit = jest.fn();
+
+    render(<SignUpForm onSubmit={mockOnSubmit} />);
+
+    fireEvent.input(screen.getByLabelText(/username/i), {
+      target: { value: 'ValidUser1' }
+    });
+
+    fireEvent.input(screen.getByLabelText(/email/i), {
+      target: { value: 'user@example.com' }
+    });
+
+    fireEvent.input(screen.getByLabelText(/password/i), {
+      target: { value: 'short' }
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+    });
+
+    const errorMessage = await screen.findByTestId('password-error');
+    expect(errorMessage).toHaveTextContent(/at least 8 characters/i);
+    expect(mockOnSubmit).not.toHaveBeenCalled();
+  });
 });
