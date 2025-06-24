@@ -2,7 +2,6 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { SignUpForm } from '../components/sign-up-form';
 
-// Helper to render, fill inputs, and submit form
 const setupAndSubmit = async (username: string, email: string) => {
   const mockOnSubmit = jest.fn();
 
@@ -76,6 +75,10 @@ describe('SignUpForm Email Validation', () => {
       target: { value: 'already@taken.com' }
     });
 
+    fireEvent.input(screen.getByLabelText(/password/i), {
+      target: { value: 'Valid123' }
+    });
+
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
     });
@@ -97,6 +100,10 @@ describe('SignUpForm Email Validation', () => {
       target: { value: '  user@example.com  ' }
     });
 
+    fireEvent.input(screen.getByLabelText(/password/i), {
+      target: { value: 'ValidPass123' }
+    });
+
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
     });
@@ -105,7 +112,8 @@ describe('SignUpForm Email Validation', () => {
     expect(mockOnSubmit).toHaveBeenCalledWith(
       expect.objectContaining({
         email: 'user@example.com',
-        username: 'ValidUser1'
+        username: 'ValidUser1',
+        password: 'ValidPass123'
       })
     );
   });
@@ -190,6 +198,10 @@ describe('SignUpForm Username Validation', () => {
       target: { value: 'test@example.com' }
     });
 
+    fireEvent.input(screen.getByLabelText(/password/i), {
+      target: { value: 'ValidPass123' }
+    });
+
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
     });
@@ -248,6 +260,10 @@ describe('SignUpForm Username Validation', () => {
       target: { value: 'user@example.com' }
     });
 
+    fireEvent.input(screen.getByLabelText(/password/i), {
+      target: { value: 'ValidPass123' }
+    });
+
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
     });
@@ -256,8 +272,32 @@ describe('SignUpForm Username Validation', () => {
     expect(mockOnSubmit).toHaveBeenCalledWith(
       expect.objectContaining({
         username: 'TrimUser1',
-        email: 'user@example.com'
+        email: 'user@example.com',
+        password: 'ValidPass123'
       })
     );
+  });
+});
+
+describe('SignUpForm Password Validation', () => {
+  it('shows error when password field is empty', async () => {
+    const mockOnSubmit = jest.fn();
+
+    render(<SignUpForm onSubmit={mockOnSubmit} />);
+
+    fireEvent.input(screen.getByLabelText(/username/i), {
+      target: { value: 'ValidUser1' }
+    });
+    fireEvent.input(screen.getByLabelText(/email/i), {
+      target: { value: 'valid@example.com' }
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+
+    const errorMessage = await screen.findByTestId('password-error');
+    expect(errorMessage).toBeInTheDocument();
+    expect(errorMessage).toHaveTextContent(/password is required/i);
+
+    expect(mockOnSubmit).not.toHaveBeenCalled();
   });
 });

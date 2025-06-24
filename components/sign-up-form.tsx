@@ -80,6 +80,20 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
         )}
       </div>
 
+      <div>
+        <label htmlFor='password'>Password</label>
+        <input
+          id='password'
+          type='password'
+          {...register('password', {
+            setValueAs: (val) => val.trim()
+          })}
+        />
+        {errors.password && (
+          <p data-testid='password-error'>{errors.password.message}</p>
+        )}
+      </div>
+
       <button type='submit'>Sign Up</button>
     </form>
   );

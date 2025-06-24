@@ -4,8 +4,8 @@ export const signUpSchema = z.object({
   email: z
     .string()
     .nonempty('Email is required')
-    .email('Invalid email format') // validate email first
-    .transform((val) => val.trim()), // then trim whitespace
+    .email('Invalid email format')
+    .transform((val) => val.trim()),
   username: z
     .string()
     .nonempty('Username is required')
@@ -26,5 +26,6 @@ export const signUpSchema = z.object({
     .refine(
       (val) => /[0-9]/.test(val),
       'Username must contain at least one number'
-    )
+    ),
+  password: z.string().nonempty('Password is required')
 });
