@@ -36,4 +36,8 @@ export const signUpSchema = z.object({
       (val) => /[!@#$%^&*(),.?":{}|<>]/.test(val),
       'Password must contain at least one special character'
     )
+    .refine(
+      (val) => /[A-Z]/.test(val),
+      'Password must contain at least one uppercase letter'
+    )
 });
