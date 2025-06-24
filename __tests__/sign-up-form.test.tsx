@@ -432,4 +432,30 @@ describe('SignUpForm Password Validation', () => {
 
     expect(mockOnSubmit).not.toHaveBeenCalled();
   });
+
+  it('shows error when password does not contain at least one number', async () => {
+    const mockOnSubmit = jest.fn();
+
+    render(<SignUpForm onSubmit={mockOnSubmit} />);
+
+    fireEvent.input(screen.getByLabelText(/password/i), {
+      target: { value: 'Password!' }
+    });
+
+    fireEvent.input(screen.getByLabelText(/username/i), {
+      target: { value: 'ValidUser1' }
+    });
+
+    fireEvent.input(screen.getByLabelText(/email/i), {
+      target: { value: 'user@example.com' }
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+    });
+
+    const errorMessage = await screen.findByTestId('password-error');
+    expect(errorMessage).toHaveTextContent(/at least one number/i);
+    expect(mockOnSubmit).not.toHaveBeenCalled();
+  });
 });
