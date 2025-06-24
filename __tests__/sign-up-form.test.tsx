@@ -30,7 +30,7 @@ describe('SignUpForm Email Validation', () => {
     render(<SignUpForm onSubmit={mockOnSubmit} />);
 
     fireEvent.input(screen.getByLabelText(/username/i), {
-      target: { value: 'testuser' }
+      target: { value: 'testUser1' }
     });
 
     fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
@@ -69,7 +69,7 @@ describe('SignUpForm Email Validation', () => {
     render(<SignUpForm onSubmit={mockOnSubmit} />);
 
     fireEvent.input(screen.getByLabelText(/username/i), {
-      target: { value: 'testUser' }
+      target: { value: 'testUser1' }
     });
 
     fireEvent.input(screen.getByLabelText(/email/i), {
@@ -175,7 +175,7 @@ describe('SignUpForm Username Validation', () => {
     expect(mockOnSubmit).not.toHaveBeenCalled();
   });
 
-  it.only('shows error when username is already taken', async () => {
+  it('shows error when username is already taken', async () => {
     const mockOnSubmit = jest.fn(async () => {
       throw new Error('Username already taken');
     });
@@ -241,7 +241,7 @@ describe('SignUpForm Username Validation', () => {
     render(<SignUpForm onSubmit={mockOnSubmit} />);
 
     fireEvent.input(screen.getByLabelText(/username/i), {
-      target: { value: '  TrimUser  ' }
+      target: { value: '  TrimUser1  ' }
     });
 
     fireEvent.input(screen.getByLabelText(/email/i), {
@@ -255,7 +255,7 @@ describe('SignUpForm Username Validation', () => {
     expect(mockOnSubmit).toHaveBeenCalledTimes(1);
     expect(mockOnSubmit).toHaveBeenCalledWith(
       expect.objectContaining({
-        username: 'TrimUser',
+        username: 'TrimUser1',
         email: 'user@example.com'
       })
     );
