@@ -23,4 +23,8 @@ export const signUpSchema = z.object({
       (val) => /[a-z]/.test(val),
       'Username must contain at least one lowercase letter'
     )
+    .refine(
+      (val) => /[0-9]/.test(val),
+      'Username must contain at least one number'
+    )
 });
