@@ -76,7 +76,7 @@ describe('SignUpForm Email Validation', () => {
     });
 
     fireEvent.input(screen.getByLabelText(/password/i), {
-      target: { value: 'Valid123' }
+      target: { value: 'Valid123!' }
     });
 
     await act(async () => {
@@ -101,7 +101,7 @@ describe('SignUpForm Email Validation', () => {
     });
 
     fireEvent.input(screen.getByLabelText(/password/i), {
-      target: { value: 'ValidPass123' }
+      target: { value: 'ValidPass123!' }
     });
 
     await act(async () => {
@@ -113,7 +113,7 @@ describe('SignUpForm Email Validation', () => {
       expect.objectContaining({
         email: 'user@example.com',
         username: 'ValidUser1',
-        password: 'ValidPass123'
+        password: 'ValidPass123!'
       })
     );
   });
@@ -199,7 +199,7 @@ describe('SignUpForm Username Validation', () => {
     });
 
     fireEvent.input(screen.getByLabelText(/password/i), {
-      target: { value: 'ValidPass123' }
+      target: { value: 'ValidPass123!' }
     });
 
     await act(async () => {
@@ -261,7 +261,7 @@ describe('SignUpForm Username Validation', () => {
     });
 
     fireEvent.input(screen.getByLabelText(/password/i), {
-      target: { value: 'ValidPass123' }
+      target: { value: 'ValidPass123!' }
     });
 
     await act(async () => {
@@ -273,7 +273,7 @@ describe('SignUpForm Username Validation', () => {
       expect.objectContaining({
         username: 'TrimUser1',
         email: 'user@example.com',
-        password: 'ValidPass123'
+        password: 'ValidPass123!'
       })
     );
   });
@@ -315,7 +315,7 @@ describe('SignUpForm Password Validation', () => {
     });
 
     fireEvent.input(screen.getByLabelText(/password/i), {
-      target: { value: 'short' }
+      target: { value: 'short!' }
     });
 
     await act(async () => {
@@ -341,7 +341,7 @@ describe('SignUpForm Password Validation', () => {
     });
 
     fireEvent.input(screen.getByLabelText(/password/i), {
-      target: { value: 'a'.repeat(129) } // 129 characters
+      target: { value: 'a'.repeat(128) + '!' }
     });
 
     await act(async () => {
@@ -350,6 +350,32 @@ describe('SignUpForm Password Validation', () => {
 
     const errorMessage = await screen.findByTestId('password-error');
     expect(errorMessage).toHaveTextContent(/at most 128 characters/i);
+    expect(mockOnSubmit).not.toHaveBeenCalled();
+  });
+
+  it('shows error when password does not contain a special character', async () => {
+    const mockOnSubmit = jest.fn();
+
+    render(<SignUpForm onSubmit={mockOnSubmit} />);
+
+    fireEvent.input(screen.getByLabelText(/username/i), {
+      target: { value: 'ValidUser1' }
+    });
+
+    fireEvent.input(screen.getByLabelText(/email/i), {
+      target: { value: 'user@example.com' }
+    });
+
+    fireEvent.input(screen.getByLabelText(/password/i), {
+      target: { value: 'Password123' }
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+    });
+
+    const errorMessage = await screen.findByTestId('password-error');
+    expect(errorMessage).toHaveTextContent(/at least one special character/i);
     expect(mockOnSubmit).not.toHaveBeenCalled();
   });
 });

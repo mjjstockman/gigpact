@@ -32,4 +32,8 @@ export const signUpSchema = z.object({
     .nonempty('Password is required')
     .min(8, 'Password must be at least 8 characters')
     .max(128, 'Password must be at most 128 characters')
+    .refine(
+      (val) => /[!@#$%^&*(),.?":{}|<>]/.test(val),
+      'Password must contain at least one special character'
+    )
 });
