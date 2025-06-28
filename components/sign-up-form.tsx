@@ -49,12 +49,22 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
           {...register('username', {
             setValueAs: (val) => val.trim()
           })}
+          aria-invalid={!!errors.username || !!usernameTakenError}
+          aria-describedby='username-error username-taken-error'
         />
         {errors.username && (
-          <p data-testid='username-error'>{errors.username.message}</p>
+          <p
+            id='username-error'
+            data-testid='username-error'
+            style={{ color: 'red' }}>
+            {errors.username.message}
+          </p>
         )}
         {usernameTakenError && (
-          <p data-testid='username-taken-error' style={{ color: 'red' }}>
+          <p
+            id='username-taken-error'
+            data-testid='username-taken-error'
+            style={{ color: 'red' }}>
             {usernameTakenError}
           </p>
         )}
@@ -69,17 +79,28 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
           {...register('email', {
             setValueAs: (val) => val.trim()
           })}
+          aria-invalid={!!errors.email || !!emailTakenError}
+          aria-describedby='email-error email-taken-error'
         />
         {errors.email && (
-          <p data-testid='email-error'>{errors.email.message}</p>
+          <p
+            id='email-error'
+            data-testid='email-error'
+            style={{ color: 'red' }}>
+            {errors.email.message}
+          </p>
         )}
         {emailTakenError && (
-          <p data-testid='email-taken-error' style={{ color: 'red' }}>
+          <p
+            id='email-taken-error'
+            data-testid='email-taken-error'
+            style={{ color: 'red' }}>
             {emailTakenError}
           </p>
         )}
       </div>
 
+      {/* Password field */}
       <div>
         <label htmlFor='password'>Password</label>
         <input
@@ -88,9 +109,38 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
           {...register('password', {
             setValueAs: (val) => val.trim()
           })}
+          aria-invalid={!!errors.password}
+          aria-describedby='password-error'
         />
         {errors.password && (
-          <p data-testid='password-error'>{errors.password.message}</p>
+          <p
+            id='password-error'
+            data-testid='password-error'
+            style={{ color: 'red' }}>
+            {errors.password.message}
+          </p>
+        )}
+      </div>
+
+      {/* Confirm Password field */}
+      <div>
+        <label htmlFor='confirmPassword'>Confirm Password</label>
+        <input
+          id='confirmPassword'
+          type='password'
+          {...register('confirmPassword', {
+            setValueAs: (val) => val.trim()
+          })}
+          aria-invalid={!!errors.confirmPassword}
+          aria-describedby='confirm-password-error'
+        />
+        {errors.confirmPassword && (
+          <p
+            id='confirm-password-error'
+            data-testid='confirm-password-error'
+            style={{ color: 'red' }}>
+            {errors.confirmPassword.message}
+          </p>
         )}
       </div>
 
