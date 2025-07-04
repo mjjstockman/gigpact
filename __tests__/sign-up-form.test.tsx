@@ -13,7 +13,7 @@ const fillForm = ({
   email = 'user@example.com',
   password = 'ValidPass123!',
   confirmPassword = 'ValidPass123!'
-}) => {
+} = {}) => {
   fireEvent.input(screen.getByLabelText(/username/i), {
     target: { value: username }
   });
@@ -326,5 +326,28 @@ describe('SignUpForm Submission Feedback', () => {
     await waitFor(() => {
       expect(screen.queryByTestId('spinner-overlay')).not.toBeInTheDocument();
     });
+  });
+
+  it('submits the form successfully with valid data', async () => {
+    const mockOnSubmit = jest.fn().mockResolvedValueOnce(undefined);
+
+    render(<SignUpForm onSubmit={mockOnSubmit} />);
+
+    fillForm();
+
+    fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+
+    await waitFor(() => expect(mockOnSubmit).toHaveBeenCalledTimes(1));
+
+    expect(mockOnSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        username: 'ValidUser1',
+        email: 'user@example.com',
+        password: 'ValidPass123!',
+        confirmPassword: 'ValidPass123!'
+      })
+    );
+
+    expect(screen.queryByTestId(/-error$/)).not.toBeInTheDocument();
   });
 });
