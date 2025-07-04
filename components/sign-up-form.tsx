@@ -10,6 +10,7 @@ type SignUpFormProps = {
 export function SignUpForm({ onSubmit }: SignUpFormProps) {
   const [emailTakenError, setEmailTakenError] = useState('');
   const [usernameTakenError, setUsernameTakenError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false); // ✅ New state
 
   const {
     register,
@@ -23,6 +24,8 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
   async function handleFormSubmit(data: SignUpFormData) {
     setEmailTakenError('');
     setUsernameTakenError('');
+    setIsSubmitting(true); // ✅ Show spinner
+
     try {
       await onSubmit(data);
     } catch (error: unknown) {
@@ -35,11 +38,27 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
           throw error;
         }
       }
+    } finally {
+      setIsSubmitting(false); // ✅ Hide spinner
     }
   }
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} noValidate>
+      {/* ✅ Spinner overlay */}
+      {isSubmitting && (
+        <div
+          data-testid='spinner-overlay'
+          style={{
+            padding: '1rem',
+            marginBottom: '1rem',
+            backgroundColor: '#f0f0f0',
+            textAlign: 'center'
+          }}>
+          Submitting...
+        </div>
+      )}
+
       {/* Username field */}
       <div>
         <label htmlFor='username'>Username</label>
@@ -144,7 +163,9 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
         )}
       </div>
 
-      <button type='submit'>Sign Up</button>
+      <button type='submit' disabled={isSubmitting}>
+        Sign Up
+      </button>
     </form>
   );
 }

@@ -301,3 +301,30 @@ describe('SignUpForm Password Validation', () => {
     expect(mockOnSubmit).not.toHaveBeenCalled();
   });
 });
+
+describe('SignUpForm Submission Feedback', () => {
+  it('displays and removes spinner overlay during form submission', async () => {
+    const mockOnSubmit = jest.fn(
+      () => new Promise((res) => setTimeout(res, 500))
+    );
+
+    render(<SignUpForm onSubmit={mockOnSubmit} />);
+
+    fillForm({
+      username: 'TestUser1',
+      email: 'test@example.com',
+      password: 'Password123!',
+      confirmPassword: 'Password123!'
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+
+    expect(await screen.findByTestId('spinner-overlay')).toBeInTheDocument();
+
+    await waitFor(() => expect(mockOnSubmit).toHaveBeenCalled());
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('spinner-overlay')).not.toBeInTheDocument();
+    });
+  });
+});
