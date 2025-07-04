@@ -350,4 +350,20 @@ describe('SignUpForm Submission Feedback', () => {
 
     expect(screen.queryByTestId(/-error$/)).not.toBeInTheDocument();
   });
+
+  it('disables the submit button while submitting', async () => {
+    const mockOnSubmit = jest.fn(
+      () => new Promise((res) => setTimeout(res, 300))
+    );
+
+    render(<SignUpForm onSubmit={mockOnSubmit} />);
+    fillForm();
+
+    const submitButton = screen.getByRole('button', { name: /sign up/i });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => expect(submitButton).toBeDisabled());
+
+    await waitFor(() => expect(submitButton).not.toBeDisabled());
+  });
 });
