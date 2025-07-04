@@ -2,123 +2,99 @@ import {
   render,
   screen,
   fireEvent,
-  act,
-  waitFor
+  waitFor,
+  cleanup
 } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { SignUpForm } from '../components/sign-up-form';
 
-const setupAndSubmit = async (
-  username: string,
-  email: string,
-  mockOnSubmit: (data: any) => Promise<void> | void,
-  password: string = 'ValidPass123!',
-  confirmPassword: string = password
-) => {
-  render(<SignUpForm onSubmit={mockOnSubmit} />);
-
-  fireEvent.change(screen.getByLabelText(/username/i), {
+const fillForm = ({
+  username = 'ValidUser1',
+  email = 'user@example.com',
+  password = 'ValidPass123!',
+  confirmPassword = 'ValidPass123!'
+}) => {
+  fireEvent.input(screen.getByLabelText(/username/i), {
     target: { value: username }
   });
-
-  fireEvent.change(screen.getByLabelText(/email/i), {
+  fireEvent.input(screen.getByLabelText(/email/i), {
     target: { value: email }
   });
-
-  fireEvent.change(screen.getByLabelText(/^password$/i), {
+  fireEvent.input(screen.getByLabelText(/^password$/i), {
     target: { value: password }
   });
-
-  fireEvent.change(screen.getByLabelText(/confirm password/i), {
+  fireEvent.input(screen.getByLabelText(/confirm password/i), {
     target: { value: confirmPassword }
-  });
-
-  await act(async () => {
-    fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
   });
 };
 
+const submitForm = async () => {
+  fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+  await waitFor(() => {});
+};
+
 describe('SignUpForm Email Validation', () => {
-  it('shows error when email field is empty', async () => {
-    const mockOnSubmit = jest.fn();
+  let mockOnSubmit: jest.Mock;
 
-    await setupAndSubmit('testUser1', '', mockOnSubmit);
-
-    const errorMessage = await screen.findByTestId('email-error');
-    expect(errorMessage).toBeInTheDocument();
-    expect(errorMessage).toHaveTextContent(/email is required/i);
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-
-  it('shows error when email format is invalid', async () => {
-    const mockOnSubmit = jest.fn();
-
-    // email format invalid so cannot reuse helper because helper uses valid email
+  beforeEach(() => {
+    mockOnSubmit = jest.fn();
     render(<SignUpForm onSubmit={mockOnSubmit} />);
-
-    fireEvent.input(screen.getByLabelText(/username/i), {
-      target: { value: 'testuser' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/email/i), {
-      target: { value: 'invalid-email' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/^password$/i), {
-      target: { value: 'ValidPass123!' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/confirm password/i), {
-      target: { value: 'ValidPass123!' }
-    });
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
-    });
-
-    const errorMessage = await screen.findByTestId('email-error');
-    expect(errorMessage).toHaveTextContent(/invalid email format/i);
-    expect(mockOnSubmit).not.toHaveBeenCalled();
   });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  test.each([
+    {
+      email: '',
+      errorTestId: 'email-error',
+      errorText: /email is required/i,
+      description: 'empty email'
+    },
+    {
+      email: 'invalid-email',
+      errorTestId: 'email-error',
+      errorText: /invalid email format/i,
+      description: 'invalid email format'
+    }
+  ])(
+    'shows error when $description',
+    async ({ email, errorTestId, errorText }) => {
+      fillForm({ email });
+      await submitForm();
+
+      const errorMessage = await screen.findByTestId(errorTestId);
+      expect(errorMessage).toBeInTheDocument();
+      expect(errorMessage).toHaveTextContent(errorText);
+      expect(mockOnSubmit).not.toHaveBeenCalled();
+    }
+  );
 
   it('shows error when email is already registered', async () => {
-    const mockOnSubmit = jest.fn(async () => {
+    cleanup();
+    const takenEmailSubmit = jest.fn(async () => {
       throw new Error('Email already registered');
     });
 
-    await setupAndSubmit('ValidUser1', 'user@example.com', mockOnSubmit);
+    render(<SignUpForm onSubmit={takenEmailSubmit} />);
+    fillForm({ email: 'user@example.com' });
+    await submitForm();
 
     const errorMessage = await screen.findByTestId('email-taken-error');
     expect(errorMessage).toHaveTextContent('This email is already registered');
   });
 
   it('trims leading and trailing spaces from email before submitting', async () => {
-    const mockOnSubmit = jest.fn();
+    cleanup();
+    const trimSubmit = jest.fn();
 
-    render(<SignUpForm onSubmit={mockOnSubmit} />);
+    render(<SignUpForm onSubmit={trimSubmit} />);
+    fillForm({ email: '  user@example.com  ' });
+    await submitForm();
 
-    fireEvent.input(screen.getByLabelText(/username/i), {
-      target: { value: 'ValidUser1' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/email/i), {
-      target: { value: '  user@example.com  ' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/^password$/i), {
-      target: { value: 'ValidPass123!' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/confirm password/i), {
-      target: { value: 'ValidPass123!' }
-    });
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
-    });
-
-    expect(mockOnSubmit).toHaveBeenCalledTimes(1);
-    expect(mockOnSubmit).toHaveBeenCalledWith(
+    expect(trimSubmit).toHaveBeenCalledTimes(1);
+    expect(trimSubmit).toHaveBeenCalledWith(
       expect.objectContaining({
         email: 'user@example.com',
         username: 'ValidUser1',
@@ -129,414 +105,97 @@ describe('SignUpForm Email Validation', () => {
 });
 
 describe('SignUpForm Username Validation', () => {
-  it('shows error when username field is empty', async () => {
-    const mockOnSubmit = jest.fn();
+  let mockOnSubmit: jest.Mock;
 
-    await setupAndSubmit('', 'test@email.com', mockOnSubmit);
-
-    const errorMessage = await screen.findByTestId('username-error');
-    expect(errorMessage).toBeInTheDocument();
-    expect(errorMessage).toHaveTextContent(/username is required/i);
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-
-  it('shows error when username is less than 3 characters', async () => {
-    const mockOnSubmit = jest.fn();
-
-    await setupAndSubmit('ab', 'test@email.com', mockOnSubmit);
-
-    const errorMessage = await screen.findByTestId('username-error');
-    expect(errorMessage).toBeInTheDocument();
-    expect(errorMessage).toHaveTextContent(/at least 3 characters/i);
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-
-  it('shows error when username is too long', async () => {
-    const mockOnSubmit = jest.fn();
-
+  beforeEach(() => {
+    mockOnSubmit = jest.fn();
     render(<SignUpForm onSubmit={mockOnSubmit} />);
-
-    fireEvent.input(screen.getByLabelText(/username/i), {
-      target: { value: 'A'.repeat(21) }
-    });
-
-    fireEvent.input(screen.getByLabelText(/email/i), {
-      target: { value: 'test@example.com' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/^password$/i), {
-      target: { value: 'ValidPass123!' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/confirm password/i), {
-      target: { value: 'ValidPass123!' }
-    });
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
-    });
-
-    const errorMessage = await screen.findByTestId('username-error');
-    expect(errorMessage).toHaveTextContent(
-      /username must be at most 20 characters/i
-    );
-    expect(mockOnSubmit).not.toHaveBeenCalled();
   });
 
-  it('shows error when username contains spaces or invalid symbols like "!"', async () => {
-    const mockOnSubmit = jest.fn();
-
-    render(<SignUpForm onSubmit={mockOnSubmit} />);
-
-    fireEvent.input(screen.getByLabelText(/username/i), {
-      target: { value: 'invalid user!' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/email/i), {
-      target: { value: 'test@example.com' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/^password$/i), {
-      target: { value: 'ValidPass123!' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/confirm password/i), {
-      target: { value: 'ValidPass123!' }
-    });
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
-    });
-
-    const errorMessage = await screen.findByTestId('username-error');
-    expect(errorMessage).toHaveTextContent(
-      /username can only contain letters, numbers, underscores, and hyphens/i
-    );
-
-    expect(mockOnSubmit).not.toHaveBeenCalled();
+  afterEach(() => {
+    cleanup();
   });
+
+  test.each([
+    {
+      username: '',
+      errorTestId: 'username-error',
+      errorText: /username is required/i,
+      description: 'empty username'
+    },
+    {
+      username: 'ab',
+      errorTestId: 'username-error',
+      errorText: /at least 3 characters/i,
+      description: 'username too short'
+    },
+    {
+      username: 'A'.repeat(21),
+      errorTestId: 'username-error',
+      errorText: /username must be at most 20 characters/i,
+      description: 'username too long'
+    },
+    {
+      username: 'invalid user!',
+      errorTestId: 'username-error',
+      errorText:
+        /username can only contain letters, numbers, underscores, and hyphens/i,
+      description: 'username with invalid chars'
+    },
+    {
+      username: 'alllowercase',
+      errorTestId: 'username-error',
+      errorText: /must contain at least one uppercase letter/i,
+      description: 'username missing uppercase letter'
+    },
+    {
+      username: 'ALLUPPERCASE',
+      errorTestId: 'username-error',
+      errorText: /must contain at least one lowercase letter/i,
+      description: 'username missing lowercase letter'
+    },
+    {
+      username: 'NoNumbersHere',
+      errorTestId: 'username-error',
+      errorText: /must contain at least one number/i,
+      description: 'username missing number'
+    }
+  ])(
+    'shows error when $description',
+    async ({ username, errorTestId, errorText }) => {
+      fillForm({ username });
+      await submitForm();
+
+      const errorMessage = await screen.findByTestId(errorTestId);
+      expect(errorMessage).toHaveTextContent(errorText);
+      expect(mockOnSubmit).not.toHaveBeenCalled();
+    }
+  );
 
   it('shows error when username is already taken', async () => {
-    const mockOnSubmit = jest.fn(async () => {
+    cleanup();
+    const takenUserSubmit = jest.fn(async () => {
       throw new Error('Username already taken');
     });
 
-    render(<SignUpForm onSubmit={mockOnSubmit} />);
-
-    fireEvent.input(screen.getByLabelText(/username/i), {
-      target: { value: 'takenUser1' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/email/i), {
-      target: { value: 'test@example.com' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/^password$/i), {
-      target: { value: 'ValidPass123!' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/confirm password/i), {
-      target: { value: 'ValidPass123!' }
-    });
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
-    });
+    render(<SignUpForm onSubmit={takenUserSubmit} />);
+    fillForm({ username: 'takenUser1' });
+    await submitForm();
 
     const errorMessage = await screen.findByTestId('username-taken-error');
     expect(errorMessage).toHaveTextContent('This username is already taken');
-  });
-
-  it('shows error when username does not contain any uppercase letters', async () => {
-    const mockOnSubmit = jest.fn();
-
-    await setupAndSubmit('alllowercase', 'test@example.com', mockOnSubmit);
-
-    const errorMessage = await screen.findByTestId('username-error');
-    expect(errorMessage).toHaveTextContent(
-      /must contain at least one uppercase letter/i
-    );
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-
-  it('shows error when username does not contain any lowercase letters', async () => {
-    const mockOnSubmit = jest.fn();
-
-    await setupAndSubmit('ALLUPPERCASE', 'test@example.com', mockOnSubmit);
-
-    const errorMessage = await screen.findByTestId('username-error');
-    expect(errorMessage).toHaveTextContent(
-      /must contain at least one lowercase letter/i
-    );
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-
-  it('shows error when username does not contain any numbers', async () => {
-    const mockOnSubmit = jest.fn();
-
-    await setupAndSubmit('NoNumbersHere', 'test@example.com', mockOnSubmit);
-
-    const errorMessage = await screen.findByTestId('username-error');
-    expect(errorMessage).toHaveTextContent(/must contain at least one number/i);
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-});
-
-describe('SignUpForm Username Validation', () => {
-  it('shows error when username field is empty', async () => {
-    const mockOnSubmit = jest.fn();
-    await setupAndSubmit('', 'test@email.com', mockOnSubmit);
-
-    const errorMessage = await screen.findByTestId('username-error');
-    expect(errorMessage).toBeInTheDocument();
-    expect(errorMessage).toHaveTextContent(/username is required/i);
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-
-  it('shows error when username is less than 3 characters', async () => {
-    const mockOnSubmit = jest.fn();
-    await setupAndSubmit('ab', 'test@email.com', mockOnSubmit);
-
-    const errorMessage = await screen.findByTestId('username-error');
-    expect(errorMessage).toBeInTheDocument();
-    expect(errorMessage).toHaveTextContent(/at least 3 characters/i);
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-
-  it('shows error when username is too long', async () => {
-    const mockOnSubmit = jest.fn();
-
-    render(<SignUpForm onSubmit={mockOnSubmit} />);
-
-    fireEvent.input(screen.getByLabelText(/username/i), {
-      target: { value: 'A'.repeat(21) }
-    });
-
-    fireEvent.input(screen.getByLabelText(/email/i), {
-      target: { value: 'test@example.com' }
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
-
-    const errorMessage = await screen.findByTestId('username-error');
-    expect(errorMessage).toHaveTextContent(
-      /username must be at most 20 characters/i
-    );
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-
-  it('shows error when username contains spaces or invalid symbols like "!"', async () => {
-    const mockOnSubmit = jest.fn();
-
-    render(<SignUpForm onSubmit={mockOnSubmit} />);
-
-    fireEvent.input(screen.getByLabelText(/username/i), {
-      target: { value: 'invalid user!' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/email/i), {
-      target: { value: 'test@example.com' }
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
-
-    const errorMessage = await screen.findByTestId('username-error');
-    expect(errorMessage).toHaveTextContent(
-      /username can only contain letters, numbers, underscores, and hyphens/i
-    );
-
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-
-  it('shows error when username is already taken', async () => {
-    const mockOnSubmit = jest.fn(async () => {
-      throw new Error('Username already taken');
-    });
-
-    await setupAndSubmit('takenUser1', 'test@example.com', mockOnSubmit);
-
-    const errorMessage = await screen.findByTestId('username-taken-error');
-    expect(errorMessage).toHaveTextContent('This username is already taken');
-  });
-
-  it('shows error when username does not contain any uppercase letters', async () => {
-    const mockOnSubmit = jest.fn();
-    await setupAndSubmit('alllowercase', 'test@example.com', mockOnSubmit);
-
-    const errorMessage = await screen.findByTestId('username-error');
-    expect(errorMessage).toHaveTextContent(
-      /must contain at least one uppercase letter/i
-    );
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-
-  it('shows error when username does not contain any lowercase letters', async () => {
-    const mockOnSubmit = jest.fn();
-    await setupAndSubmit('ALLUPPERCASE', 'test@example.com', mockOnSubmit);
-
-    const errorMessage = await screen.findByTestId('username-error');
-    expect(errorMessage).toHaveTextContent(
-      /must contain at least one lowercase letter/i
-    );
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-
-  it('shows error when username does not contain any numbers', async () => {
-    const mockOnSubmit = jest.fn();
-    await setupAndSubmit('NoNumbersHere', 'test@example.com', mockOnSubmit);
-
-    const errorMessage = await screen.findByTestId('username-error');
-    expect(errorMessage).toHaveTextContent(/must contain at least one number/i);
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-});
-
-describe('SignUpForm Username Validation', () => {
-  it('shows error when username field is empty', async () => {
-    const mockOnSubmit = jest.fn();
-
-    await setupAndSubmit('', 'test@email.com', mockOnSubmit);
-
-    const errorMessage = await screen.findByTestId('username-error');
-    expect(errorMessage).toBeInTheDocument();
-    expect(errorMessage).toHaveTextContent(/username is required/i);
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-
-  it('shows error when username is less than 3 characters', async () => {
-    const mockOnSubmit = jest.fn(); // Define mock function
-
-    await setupAndSubmit('ab', 'test@email.com', mockOnSubmit); // Pass it in
-
-    const errorMessage = await screen.findByTestId('username-error');
-    expect(errorMessage).toBeInTheDocument();
-    expect(errorMessage).toHaveTextContent(/at least 3 characters/i);
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-
-  it('shows error when username is too long', async () => {
-    const mockOnSubmit = jest.fn();
-
-    render(<SignUpForm onSubmit={mockOnSubmit} />);
-
-    fireEvent.input(screen.getByLabelText(/username/i), {
-      target: { value: 'A'.repeat(21) }
-    });
-
-    fireEvent.input(screen.getByLabelText(/email/i), {
-      target: { value: 'test@example.com' }
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
-
-    const errorMessage = await screen.findByTestId('username-error');
-    expect(errorMessage).toHaveTextContent(
-      /username must be at most 20 characters/i
-    );
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-
-  it('shows error when username contains spaces or invalid symbols like "!"', async () => {
-    const mockOnSubmit = jest.fn();
-
-    render(<SignUpForm onSubmit={mockOnSubmit} />);
-
-    fireEvent.input(screen.getByLabelText(/username/i), {
-      target: { value: 'invalid user!' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/email/i), {
-      target: { value: 'test@example.com' }
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
-
-    const errorMessage = await screen.findByTestId('username-error');
-    expect(errorMessage).toHaveTextContent(
-      /username can only contain letters, numbers, underscores, and hyphens/i
-    );
-
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-
-  it('shows error when username is already taken', async () => {
-    const mockOnSubmit = jest.fn(async () => {
-      throw new Error('Username already taken');
-    });
-
-    render(<SignUpForm onSubmit={mockOnSubmit} />);
-
-    fireEvent.input(screen.getByLabelText(/username/i), {
-      target: { value: 'takenUser1' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/email/i), {
-      target: { value: 'test@example.com' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/^password$/i), {
-      target: { value: 'ValidPass123!' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/confirm password/i), {
-      target: { value: 'ValidPass123!' }
-    });
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
-    });
-
-    // Wait for the error to appear
-    await waitFor(() => {
-      expect(screen.getByTestId('username-taken-error')).toHaveTextContent(
-        'This username is already taken'
-      );
-    });
-
-    // Or alternatively:
-    // const errorMessage = await screen.findByTestId('username-taken-error');
-    // expect(errorMessage).toHaveTextContent('This username is already taken');
-  });
-
-  it('shows error when username does not contain any uppercase letters', async () => {
-    const mockOnSubmit = jest.fn();
-
-    await setupAndSubmit('alllowercase', 'test@example.com', mockOnSubmit);
-
-    const errorMessage = await screen.findByTestId('username-error');
-    expect(errorMessage).toHaveTextContent(
-      /must contain at least one uppercase letter/i
-    );
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-
-  it('shows error when username does not contain any lowercase letters', async () => {
-    const mockOnSubmit = jest.fn();
-    await setupAndSubmit('ALLUPPERCASE', 'test@example.com', mockOnSubmit);
-
-    const errorMessage = await screen.findByTestId('username-error');
-    expect(errorMessage).toHaveTextContent(
-      /must contain at least one lowercase letter/i
-    );
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-
-  it('shows error when username does not contain any numbers', async () => {
-    const mockOnSubmit = jest.fn();
-    await setupAndSubmit('NoNumbersHere', 'test@example.com', mockOnSubmit);
-
-    const errorMessage = await screen.findByTestId('username-error');
-    expect(errorMessage).toHaveTextContent(/must contain at least one number/i);
-    expect(mockOnSubmit).not.toHaveBeenCalled();
   });
 
   it('trims leading and trailing spaces from username before submitting', async () => {
-    const mockOnSubmit = jest.fn();
+    cleanup();
+    const trimSubmit = jest.fn();
 
-    await setupAndSubmit('  TrimUser1  ', 'user@example.com', mockOnSubmit);
+    render(<SignUpForm onSubmit={trimSubmit} />);
+    fillForm({ username: '  TrimUser1  ' });
+    await submitForm();
 
-    expect(mockOnSubmit).toHaveBeenCalledTimes(1);
-    expect(mockOnSubmit).toHaveBeenCalledWith(
+    expect(trimSubmit).toHaveBeenCalledTimes(1);
+    expect(trimSubmit).toHaveBeenCalledWith(
       expect.objectContaining({
         username: 'TrimUser1',
         email: 'user@example.com',
@@ -547,202 +206,79 @@ describe('SignUpForm Username Validation', () => {
 });
 
 describe('SignUpForm Password Validation', () => {
-  it('shows error when password field is empty', async () => {
-    const mockOnSubmit = jest.fn();
+  let mockOnSubmit: jest.Mock;
 
+  beforeEach(() => {
+    mockOnSubmit = jest.fn();
     render(<SignUpForm onSubmit={mockOnSubmit} />);
-
-    fireEvent.input(screen.getByLabelText(/username/i), {
-      target: { value: 'ValidUser1' }
-    });
-    fireEvent.input(screen.getByLabelText(/email/i), {
-      target: { value: 'valid@example.com' }
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
-
-    const errorMessage = await screen.findByTestId('password-error');
-    expect(errorMessage).toBeInTheDocument();
-    expect(errorMessage).toHaveTextContent(/password is required/i);
-
-    expect(mockOnSubmit).not.toHaveBeenCalled();
   });
 
-  it('shows error when password is less than 8 characters', async () => {
-    const mockOnSubmit = jest.fn();
-
-    render(<SignUpForm onSubmit={mockOnSubmit} />);
-
-    fireEvent.input(screen.getByLabelText(/username/i), {
-      target: { value: 'ValidUser1' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/email/i), {
-      target: { value: 'user@example.com' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/^password$/i), {
-      target: { value: 'short!' }
-    });
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
-    });
-
-    const errorMessage = await screen.findByTestId('password-error');
-    expect(errorMessage).toHaveTextContent(/at least 8 characters/i);
-    expect(mockOnSubmit).not.toHaveBeenCalled();
+  afterEach(() => {
+    cleanup();
   });
 
-  it('shows error when password is more than 128 characters', async () => {
-    const mockOnSubmit = jest.fn();
+  test.each([
+    {
+      password: 'short!',
+      errorTestId: 'password-error',
+      errorText: /at least 8 characters/i,
+      description: 'password too short'
+    },
+    {
+      password: 'a'.repeat(128) + '!',
+      errorTestId: 'password-error',
+      errorText: /at most 128 characters/i,
+      description: 'password too long'
+    },
+    {
+      password: 'Password123',
+      errorTestId: 'password-error',
+      errorText: /at least one special character/i,
+      description: 'password missing special character'
+    },
+    {
+      password: 'alllowercase123!',
+      errorTestId: 'password-error',
+      errorText: /must contain at least one uppercase letter/i,
+      description: 'password missing uppercase letter'
+    },
+    {
+      password: 'PASSWORD123!',
+      errorTestId: 'password-error',
+      errorText: /at least one lowercase letter/i,
+      description: 'password missing lowercase letter'
+    },
+    {
+      password: 'Password!',
+      errorTestId: 'password-error',
+      errorText: /at least one number/i,
+      description: 'password missing number'
+    }
+  ])(
+    'shows error when $description',
+    async ({ password, errorTestId, errorText }) => {
+      fillForm({ password, confirmPassword: password });
+      await submitForm();
 
-    render(<SignUpForm onSubmit={mockOnSubmit} />);
-
-    fireEvent.input(screen.getByLabelText(/username/i), {
-      target: { value: 'ValidUser1' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/email/i), {
-      target: { value: 'user@example.com' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/^password$/i), {
-      target: { value: 'a'.repeat(128) + '!' }
-    });
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
-    });
-
-    const errorMessage = await screen.findByTestId('password-error');
-    expect(errorMessage).toHaveTextContent(/at most 128 characters/i);
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-
-  it('shows error when password does not contain a special character', async () => {
-    const mockOnSubmit = jest.fn();
-
-    render(<SignUpForm onSubmit={mockOnSubmit} />);
-
-    fireEvent.input(screen.getByLabelText(/username/i), {
-      target: { value: 'ValidUser1' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/email/i), {
-      target: { value: 'user@example.com' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/^password$/i), {
-      target: { value: 'Password123' }
-    });
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
-    });
-
-    const errorMessage = await screen.findByTestId('password-error');
-    expect(errorMessage).toHaveTextContent(/at least one special character/i);
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-
-  it('shows error when password does not contain at least one uppercase letter', async () => {
-    const mockOnSubmit = jest.fn();
-
-    render(<SignUpForm onSubmit={mockOnSubmit} />);
-
-    fireEvent.input(screen.getByLabelText(/username/i), {
-      target: { value: 'ValidUser1' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/email/i), {
-      target: { value: 'user@example.com' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/^password$/i), {
-      target: { value: 'alllowercase123!' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/^confirm password$/i), {
-      target: { value: 'alllowercase123!' }
-    });
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
-    });
-
-    const errorMessage = await screen.findByTestId('password-error');
-    expect(errorMessage).toHaveTextContent(
-      /must contain at least one uppercase letter/i
-    );
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-
-  it('shows error when password does not contain at least one lowercase letter', async () => {
-    const mockOnSubmit = jest.fn();
-
-    render(<SignUpForm onSubmit={mockOnSubmit} />);
-
-    fireEvent.input(screen.getByLabelText(/^password$/i), {
-      target: { value: 'PASSWORD123!' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/username/i), {
-      target: { value: 'ValidUser1' }
-    });
-    fireEvent.input(screen.getByLabelText(/email/i), {
-      target: { value: 'user@example.com' }
-    });
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
-    });
-
-    const errorMessage = await screen.findByTestId('password-error');
-    expect(errorMessage).toHaveTextContent(/at least one lowercase letter/i);
-
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
-
-  it('shows error when password does not contain at least one number', async () => {
-    const mockOnSubmit = jest.fn();
-
-    render(<SignUpForm onSubmit={mockOnSubmit} />);
-
-    fireEvent.input(screen.getByLabelText(/^password$/i), {
-      target: { value: 'Password!' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/username/i), {
-      target: { value: 'ValidUser1' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/email/i), {
-      target: { value: 'user@example.com' }
-    });
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
-    });
-
-    const errorMessage = await screen.findByTestId('password-error');
-    expect(errorMessage).toHaveTextContent(/at least one number/i);
-    expect(mockOnSubmit).not.toHaveBeenCalled();
-  });
+      const errorMessage = await screen.findByTestId(errorTestId);
+      expect(errorMessage).toHaveTextContent(errorText);
+      expect(mockOnSubmit).not.toHaveBeenCalled();
+    }
+  );
 
   it('trims leading and trailing spaces from password before submitting', async () => {
-    const mockOnSubmit = jest.fn();
+    cleanup();
+    const trimSubmit = jest.fn();
 
-    await setupAndSubmit(
-      'ValidUser1',
-      'user@example.com',
-      mockOnSubmit,
-      '  Password123!  ',
-      '  Password123!  '
-    );
+    render(<SignUpForm onSubmit={trimSubmit} />);
+    fillForm({
+      password: '  Password123!  ',
+      confirmPassword: '  Password123!  '
+    });
+    await submitForm();
 
-    expect(mockOnSubmit).toHaveBeenCalledTimes(1);
-    expect(mockOnSubmit).toHaveBeenCalledWith(
+    expect(trimSubmit).toHaveBeenCalledTimes(1);
+    expect(trimSubmit).toHaveBeenCalledWith(
       expect.objectContaining({
         username: 'ValidUser1',
         email: 'user@example.com',
@@ -752,29 +288,12 @@ describe('SignUpForm Password Validation', () => {
   });
 
   it('shows error when confirm password does not match the password', async () => {
-    const mockOnSubmit = jest.fn();
-
-    render(<SignUpForm onSubmit={mockOnSubmit} />);
-
-    fireEvent.input(screen.getByLabelText(/username/i), {
-      target: { value: 'ValidUser1' }
+    fillForm({
+      password: 'Password123!',
+      confirmPassword: 'DifferentPass123!'
     });
 
-    fireEvent.input(screen.getByLabelText(/email/i), {
-      target: { value: 'user@example.com' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/^password$/i), {
-      target: { value: 'Password123!' }
-    });
-
-    fireEvent.input(screen.getByLabelText(/^confirm password$/i), {
-      target: { value: 'DifferentPass123!' }
-    });
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
-    });
+    await submitForm();
 
     const errorMessage = await screen.findByTestId('confirm-password-error');
     expect(errorMessage).toBeInTheDocument();
