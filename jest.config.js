@@ -6,7 +6,7 @@ module.exports = {
     '^.+\\.(ts|tsx|js|jsx)$': 'ts-jest'
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
-  testMatch: ['**/__tests__/**/*.(test|spec).ts?(x)'],
+  testMatch: ['**/__tests__/**/*.{test,spec}.{ts,tsx}'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1'
