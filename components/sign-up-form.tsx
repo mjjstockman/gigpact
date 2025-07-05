@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { signUpSchema, SignUpFormData } from '../schemas/sign-up-form-schema';
@@ -11,6 +11,7 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
   const [emailTakenError, setEmailTakenError] = useState('');
   const [usernameTakenError, setUsernameTakenError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
 
   const {
     register,
@@ -24,10 +25,12 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
   async function handleFormSubmit(data: SignUpFormData) {
     setEmailTakenError('');
     setUsernameTakenError('');
-    setIsSubmitting(true); // ✅ Show spinner
+    setSubmitSuccess(false);
+    setIsSubmitting(true);
 
     try {
       await onSubmit(data);
+      setSubmitSuccess(true);
     } catch (error: unknown) {
       if (error instanceof Error) {
         if (error.message === 'Email already registered') {
@@ -43,11 +46,38 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
     }
   }
 
+  // Optional: Clear success message after a short delay
+  useEffect(() => {
+    if (submitSuccess) {
+      const timeout = setTimeout(() => setSubmitSuccess(false), 4000);
+      return () => clearTimeout(timeout);
+    }
+  }, [submitSuccess]);
+
   return (
     <form
       data-testid='sign-up-form'
       onSubmit={handleSubmit(handleFormSubmit)}
       noValidate>
+      {/* ✅ Accessible status message region */}
+      <div
+        aria-live='polite'
+        aria-atomic='true'
+        data-testid='form-status-message'
+        style={{
+          position: 'absolute',
+          left: '-9999px',
+          height: '1px',
+          width: '1px',
+          overflow: 'hidden'
+        }}>
+        {isSubmitting
+          ? 'Submitting...'
+          : submitSuccess
+          ? 'Form submitted successfully!'
+          : ''}
+      </div>
+
       {isSubmitting && (
         <div
           data-testid='spinner-overlay'

@@ -551,4 +551,32 @@ describe('SignUpForm Accessibility', () => {
     await userEvent.tab();
     expect(submitButton).toHaveFocus();
   });
+
+  it('announces submitting via aria-live region', async () => {
+    const mockOnSubmit = jest.fn(
+      () => new Promise((res) => setTimeout(res, 50))
+    );
+    render(<SignUpForm onSubmit={mockOnSubmit} />);
+    fillForm();
+    fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+
+    await waitFor(() =>
+      expect(screen.getByTestId('form-status-message')).toHaveTextContent(
+        'Submitting...'
+      )
+    );
+  });
+
+  it('announces success after submission via aria-live region', async () => {
+    const mockOnSubmit = jest.fn(() => Promise.resolve());
+    render(<SignUpForm onSubmit={mockOnSubmit} />);
+    fillForm();
+    fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+
+    await waitFor(() =>
+      expect(screen.getByTestId('form-status-message')).toHaveTextContent(
+        'Form submitted successfully!'
+      )
+    );
+  });
 });
