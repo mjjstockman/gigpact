@@ -10,7 +10,7 @@ type SignUpFormProps = {
 export function SignUpForm({ onSubmit }: SignUpFormProps) {
   const [emailTakenError, setEmailTakenError] = useState('');
   const [usernameTakenError, setUsernameTakenError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false); // ✅ New state
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     register,
@@ -39,13 +39,15 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
         }
       }
     } finally {
-      setIsSubmitting(false); // ✅ Hide spinner
+      setIsSubmitting(false);
     }
   }
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} noValidate>
-      {/* ✅ Spinner overlay */}
+    <form
+      data-testid='sign-up-form'
+      onSubmit={handleSubmit(handleFormSubmit)}
+      noValidate>
       {isSubmitting && (
         <div
           data-testid='spinner-overlay'
@@ -59,7 +61,6 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
         </div>
       )}
 
-      {/* Username field */}
       <div>
         <label htmlFor='username'>Username</label>
         <input
@@ -89,7 +90,6 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
         )}
       </div>
 
-      {/* Email field */}
       <div>
         <label htmlFor='email'>Email</label>
         <input
@@ -119,7 +119,6 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
         )}
       </div>
 
-      {/* Password field */}
       <div>
         <label htmlFor='password'>Password</label>
         <input
@@ -141,7 +140,6 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
         )}
       </div>
 
-      {/* Confirm Password field */}
       <div>
         <label htmlFor='confirmPassword'>Confirm Password</label>
         <input
