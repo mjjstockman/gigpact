@@ -6,6 +6,7 @@ import {
   cleanup
 } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import userEvent from '@testing-library/user-event';
 import { SignUpForm } from '../components/sign-up-form';
 
 const fillForm = ({
@@ -515,5 +516,30 @@ describe('SignUpForm Accessibility', () => {
     await waitFor(() => {
       expect(screen.queryByTestId('username-error')).toBeNull();
     });
+  });
+
+  it('allows tabbing through input fields in order', async () => {
+    render(<SignUpForm onSubmit={jest.fn()} />);
+
+    const usernameInput = screen.getByLabelText(/username/i);
+    const emailInput = screen.getByLabelText(/email/i);
+    const passwordInput = screen.getByLabelText(/^password$/i);
+    const confirmPasswordInput = screen.getByLabelText(/confirm password/i);
+    const submitButton = screen.getByRole('button', { name: /sign up/i });
+
+    usernameInput.focus();
+    expect(usernameInput).toHaveFocus();
+
+    await userEvent.tab();
+    expect(emailInput).toHaveFocus();
+
+    await userEvent.tab();
+    expect(passwordInput).toHaveFocus();
+
+    await userEvent.tab();
+    expect(confirmPasswordInput).toHaveFocus();
+
+    await userEvent.tab();
+    expect(submitButton).toHaveFocus();
   });
 });
