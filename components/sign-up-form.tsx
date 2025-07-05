@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { signUpSchema, SignUpFormData } from '../schemas/sign-up-form-schema';
@@ -13,6 +13,13 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
   const [usernameTakenError, setUsernameTakenError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+
+  const usernameRef = useRef<HTMLInputElement>(null);
+
+  // Focus username on mount
+  useEffect(() => {
+    usernameRef.current?.focus();
+  }, []);
 
   const {
     register,
@@ -47,7 +54,6 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
     }
   }
 
-  // Optional: Clear success message after a short delay
   useEffect(() => {
     if (submitSuccess) {
       const timeout = setTimeout(() => setSubmitSuccess(false), 4000);
@@ -60,7 +66,7 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
       data-testid='sign-up-form'
       onSubmit={handleSubmit(handleFormSubmit)}
       noValidate>
-      {/* ✅ Accessible status message region */}
+      {/* Accessible status message */}
       <div
         aria-live='polite'
         aria-atomic='true'
@@ -92,6 +98,7 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
         </div>
       )}
 
+      {/* Username */}
       <div>
         <label htmlFor='username'>Username</label>
         <input
@@ -100,8 +107,18 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
           {...register('username', {
             setValueAs: (val) => val.trim()
           })}
+          ref={(el) => {
+            register('username').ref(el);
+            usernameRef.current = el;
+          }}
           aria-invalid={!!errors.username || !!usernameTakenError}
-          aria-describedby='username-error username-taken-error'
+          aria-describedby={
+            errors.username
+              ? 'username-error'
+              : usernameTakenError
+              ? 'username-taken-error'
+              : undefined
+          }
         />
         {errors.username && (
           <p
@@ -121,6 +138,7 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
         )}
       </div>
 
+      {/* Email */}
       <div>
         <label htmlFor='email'>Email</label>
         <input
@@ -130,7 +148,13 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
             setValueAs: (val) => val.trim()
           })}
           aria-invalid={!!errors.email || !!emailTakenError}
-          aria-describedby='email-error email-taken-error'
+          aria-describedby={
+            errors.email
+              ? 'email-error'
+              : emailTakenError
+              ? 'email-taken-error'
+              : undefined
+          }
         />
         {errors.email && (
           <p
@@ -150,6 +174,7 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
         )}
       </div>
 
+      {/* Password */}
       <div>
         <label htmlFor='password'>Password</label>
         <input
@@ -171,6 +196,7 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
         )}
       </div>
 
+      {/* Confirm Password */}
       <div>
         <label htmlFor='confirmPassword'>Confirm Password</label>
         <input

@@ -579,4 +579,10 @@ describe('SignUpForm Accessibility', () => {
       )
     );
   });
+
+  test('username input is focused on mount', () => {
+    render(<SignUpForm onSubmit={jest.fn()} />);
+    const usernameInput = screen.getByLabelText(/username/i);
+    expect(usernameInput).toHaveFocus();
+  });
 });
