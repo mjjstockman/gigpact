@@ -6,8 +6,11 @@ import {
   cleanup
 } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { axe, toHaveNoViolations } from 'jest-axe';
 import userEvent from '@testing-library/user-event';
 import { SignUpForm } from '../components/sign-up-form';
+
+expect.extend(toHaveNoViolations);
 
 const fillForm = ({
   username = 'ValidUser1',
@@ -354,6 +357,12 @@ describe('SignUpForm Submission Feedback', () => {
 });
 
 describe('SignUpForm Accessibility', () => {
+  it('has no basic accessibility violations', async () => {
+    const { container } = render(<SignUpForm onSubmit={jest.fn()} />);
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
+  });
+
   it('disables the submit button while submitting', async () => {
     const mockOnSubmit = jest.fn(
       () => new Promise((res) => setTimeout(res, 300))
