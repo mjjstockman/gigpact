@@ -1,9 +1,14 @@
-/** @type {import('jest').Config} */
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
+  globals: {
+    'ts-jest': {
+      tsconfig: 'tsconfig.jest.json' // 👈 point to the new one
+    }
+  },
   transform: {
-    '^.+\\.(ts|tsx|js|jsx)$': 'ts-jest'
+    '^.+\\.tsx?$': 'ts-jest',
+    '^.+\\.jsx?$': 'babel-jest'
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   testMatch: ['**/__tests__/**/*.{test,spec}.{ts,tsx}'],
