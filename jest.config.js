@@ -1,14 +1,15 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
-  globals: {
-    'ts-jest': {
-      tsconfig: 'tsconfig.jest.json' // 👈 point to the new one
-    }
-  },
   transform: {
-    '^.+\\.tsx?$': 'ts-jest',
-    '^.+\\.jsx?$': 'babel-jest'
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        tsconfig: 'tsconfig.jest.json',
+        useESM: false,
+        useBabelrc: true // ✅ tells ts-jest to use babel.config.js
+      }
+    ]
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   testMatch: ['**/__tests__/**/*.{test,spec}.{ts,tsx}'],
