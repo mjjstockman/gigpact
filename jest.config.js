@@ -6,8 +6,8 @@ module.exports = {
       'ts-jest',
       {
         tsconfig: 'tsconfig.jest.json',
-        useESM: false,
-        useBabelrc: true // ✅ tells ts-jest to use babel.config.js
+        useESM: false
+        // ✅ removed useBabelrc
       }
     ]
   },
