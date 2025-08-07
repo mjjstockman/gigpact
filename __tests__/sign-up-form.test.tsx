@@ -354,6 +354,24 @@ describe('SignUpForm Submission Feedback', () => {
 
     expect(screen.queryByTestId(/-error$/)).not.toBeInTheDocument();
   });
+
+  it('shows a confirmation message on successful submission', async () => {
+    const mockOnSubmit = jest.fn().mockResolvedValueOnce(undefined);
+
+    render(<SignUpForm onSubmit={mockOnSubmit} />);
+
+    fillForm();
+
+    fireEvent.click(screen.getByRole('button', { name: /sign up/i }));
+
+    await waitFor(() => expect(mockOnSubmit).toHaveBeenCalled());
+
+    expect(
+      await screen.findByText(
+        "Thanks! We've sent you a confirmation email. Please check your inbox and click the link to continue."
+      )
+    ).toBeInTheDocument();
+  });
 });
 
 describe('SignUpForm Accessibility', () => {
