@@ -368,7 +368,7 @@ describe('SignUpForm Submission Feedback', () => {
 
     expect(
       await screen.findByText(
-        "Thanks! We've sent you a confirmation email. Please check your inbox and click the link to continue."
+        'Thanks! We have sent you a confirmation email. Please check your inbox and click the link to continue.'
       )
     ).toBeInTheDocument();
   });
@@ -593,7 +593,7 @@ describe('SignUpForm Accessibility', () => {
 
     await waitFor(() =>
       expect(screen.getByTestId('form-status-message')).toHaveTextContent(
-        'Form submitted successfully!'
+        "Thanks! We've sent you a confirmation email. Please check your inbox and click the link to continue."
       )
     );
   });

@@ -81,7 +81,7 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
         {isSubmitting
           ? 'Submitting...'
           : submitSuccess
-          ? 'Form submitted successfully!'
+          ? "Thanks! We've sent you a confirmation email. Please check your inbox and click the link to continue."
           : ''}
       </div>
 
@@ -221,6 +221,20 @@ export function SignUpForm({ onSubmit }: SignUpFormProps) {
       <button type='submit' disabled={isSubmitting}>
         Sign Up
       </button>
+
+      {submitSuccess && (
+        <p
+          data-testid='success-message'
+          style={{
+            marginTop: '1rem',
+            color: 'green',
+            fontWeight: 'bold'
+          }}
+          role='alert'>
+          Thanks! We have sent you a confirmation email. Please check your inbox
+          and click the link to continue.
+        </p>
+      )}
     </form>
   );
 }
